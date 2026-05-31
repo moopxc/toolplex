@@ -146,8 +146,11 @@ async function convertRawFile(file: File, jpgQuality: number): Promise<Blob> {
         const buf3 = await readMutableRawBuffer(file);
         const { data: data3, isJpeg: isJpeg3 } = await extractEmbeddedPreview(buf3);
         if (isJpeg3 && data3.length > 0) {
-          // Return the embedded JPEG directly — it's already a JPEG from the camera
-          return new Blob([data3], { type: "image/jpeg" });
+          // Return the embedded JPEG directly — it's already a JPEG from the camera.
+          // Copy into a plain ArrayBuffer to satisfy strict BlobPart typing.
+          const jpegBuf = new Uint8Array(data3.length);
+          jpegBuf.set(data3);
+          return new Blob([jpegBuf.buffer], { type: "image/jpeg" });
         }
         throw new Error("Embedded preview not found in this RAW file.");
       } catch (err3) {
